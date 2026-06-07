@@ -41,7 +41,7 @@ def get_backend_url() -> str:
     return "http://localhost:8000"
 
 
-BACKEND_URL = "https://conjuror-unbiased-gigantic.ngrok-free.dev"
+BACKEND_URL = get_backend_url()
 WS_URL      = BACKEND_URL.replace("https://", "wss://").replace("http://", "ws://") + "/ws/stream"
 
 
@@ -90,11 +90,15 @@ WS_COMPONENT = f"""
   let socket, mediaRecorder, stream;
   let isRecording = false;
 
-  function updateStatus(msg, ok) {{
+  function updateStatus(msg, ok, detail = "") {{
     const el = document.getElementById("ws-status");
+    const debug = document.getElementById("ws-debug");
     if (el) {{
       el.textContent = msg;
       el.style.color = ok ? "#3fb950" : "#f85149";
+    }}
+    if (debug) {{
+      debug.textContent = detail;
     }}
   }}
 
@@ -109,11 +113,12 @@ WS_COMPONENT = f"""
         audio: {{ sampleRate: 16000, channelCount: 1, echoCancellation: true }}
       }});
 
+      updateStatus("● Connecting…", false, "Backend: " + WS_URL);
       socket = new WebSocket(WS_URL);
       socket.binaryType = "arraybuffer";
 
       socket.onopen = () => {{
-        updateStatus("● Connected", true);
+        updateStatus("● Connected", true, "Backend: " + WS_URL);
         const audioCtx = new AudioContext({{ sampleRate: 16000 }});
         const source   = audioCtx.createMediaStreamSource(stream);
         const processor = audioCtx.createScriptProcessor(4096, 1, 1);
@@ -137,14 +142,14 @@ WS_COMPONENT = f"""
         }}
       }};
 
-      socket.onerror  = () => updateStatus("● Connection error", false);
+      socket.onerror  = () => updateStatus("● Connection error", false, "Check backend at: " + WS_URL);
       socket.onclose  = () => {{
-        updateStatus("● Disconnected", false);
+        updateStatus("● Disconnected", false, "Backend: " + WS_URL);
         isRecording = false;
       }};
 
     }} catch(err) {{
-      updateStatus("● Mic error: " + err.message, false);
+      updateStatus("● Mic error: " + err.message, false, "Backend: " + WS_URL);
     }}
   }};
 
@@ -159,8 +164,9 @@ WS_COMPONENT = f"""
   }};
 }})();
 </script>
-<div style="font-size:0.8rem; margin-top:4px;">
-  <span id="ws-status" class="status-dot-red">● Not connected</span>
+<div style="font-size:0.8rem; margin-top:4px; line-height:1.2;">
+  <div><span id="ws-status" class="status-dot-red">● Not connected</span></div>
+  <div id="ws-debug" style="color:#8b949e; font-size:0.75rem; margin-top:2px;">Backend: {WS_URL}</div>
 </div>
 """
 
