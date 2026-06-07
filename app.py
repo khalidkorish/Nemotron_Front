@@ -41,7 +41,7 @@ def get_backend_url() -> str:
     return "http://localhost:8000"
 
 
-BACKEND_URL = get_backend_url()
+BACKEND_URL = "https://conjuror-unbiased-gigantic.ngrok-free.dev"
 WS_URL      = BACKEND_URL.replace("https://", "wss://").replace("http://", "ws://") + "/ws/stream"
 
 
